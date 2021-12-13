@@ -1,12 +1,3 @@
-provider "aws" {
-  region = local.region
-}
-
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-
 ################################################################################
 # VPC Module
 ################################################################################
@@ -26,5 +17,12 @@ module "vpc" {
 
   enable_nat_gateway = true
   single_nat_gateway = true
+}
 
+################################################################################
+# Supporting Resources
+################################################################################
+
+data "aws_availability_zones" "available" {
+  state = "available"
 }

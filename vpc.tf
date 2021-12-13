@@ -3,7 +3,7 @@
 ################################################################################
 
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws//examples/simple-vpc"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "3.11.0"  
 
   name = local.app_name

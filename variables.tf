@@ -47,7 +47,7 @@ variable lt_ng_disk_type {
 }
 
 variable lt_ng_instance_type {
-  type        = string
+  type        = list(string)
   default     = ["t3.micro"]
   description = "EC2 Instance type for EKS Nodegroup"
 }

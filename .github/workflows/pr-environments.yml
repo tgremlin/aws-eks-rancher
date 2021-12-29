@@ -1,0 +1,28 @@
+name: "PR Environments"
+on:
+ pull_request:
+   types: [opened, closed, reopened, synchronize]
+jobs:
+ env0_pr_environment:
+   name: "PR Environment"
+   runs-on: ubuntu-18.04
+   env:
+     ACTION: deploy
+   steps:
+     - name: Install env0 CLI
+       run: npm install -g @env0/cli
+     - name: env0 configure
+       run: | 
+        env0 configure -k "${{ secrets.ENV0_API_KEY_ID }}" \
+          -s "${{ secrets.ENV0_API_KEY_SECRET }}" \
+          -o "${{ secrets.ENV0_ORG_ID }}" \
+          -p "${{ secrets.ENV0_PROJECT_ID }}" \
+          -b "${{ secrets.ENV0_BLUEPRINT_ID }}" \
+          -e "Test-Workflow-Github"
+     - name: env0 plan approve
+       run: |
+        env0 deploy -a true
+     - name: destroy if PR closed
+       if: github.event.pull_request.merged == true
+       run: |
+        env0 destroy

@@ -1,0 +1,36 @@
+name: "Run Terraform-Docs and update README.md"
+on:
+  push:
+    branches:
+      - master
+jobs:
+  runTerraformDocs:
+    name: "Download and Run TFDocs"
+    runs-on: ubuntu-18.04
+    defaults:
+      run:
+        working-directory: ./master
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          path: master
+      - name: debug
+        run: ls -al
+      - name: Make script executable
+        run: |
+          chmod +x terraform-precommit.sh
+      - name: Run script
+        run: |
+          ./terraform-precommit.sh
+      - name: Commit README.md
+        uses: EndBug/add-and-commit@v7
+        with:
+          cwd: './master'
+          add: 'README.md'
+          author_name: GitHub Actions [Auto]
+          author_email: github@githubactions
+          branch: master
+          message: 'README.md updated by automatically by terraform-docs'
+          push: true
+          

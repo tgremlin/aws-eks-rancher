@@ -1,11 +1,11 @@
 provider "aws" {
-  profile = "${var.aws_profile}"
-  region  = "${var.aws_region}"
+  profile = var.aws_profile
+  region  = var.aws_region
 }
 
 resource "aws_key_pair" "ssh_key" {
   key_name   = "${var.server_name}-rke"
-  public_key = "${file(var.ssh_public_key_file)}"
+  public_key = file(var.ssh_public_key_file)
 }
 
 data "aws_ami" "rancheros" {
@@ -24,7 +24,7 @@ data "aws_ami" "rancheros" {
 }
 
 data "aws_route53_zone" "dns_zone" {
-  name = "${var.domain_name}"
+  name = var.domain_name
 }
 
 data "aws_vpc" "default" {
@@ -32,12 +32,12 @@ data "aws_vpc" "default" {
 }
 
 data "aws_subnet_ids" "available" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 }
 
 resource "aws_security_group" "rancher-elb" {
   name   = "${var.server_name}-rancher-elb"
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 
   ingress {
     from_port   = 80
@@ -70,7 +70,7 @@ resource "aws_security_group" "rancher-elb" {
 
 resource "aws_security_group" "rancher" {
   name   = "${var.server_name}-rancher-server"
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 
   ingress {
     from_port   = 22
@@ -126,18 +126,18 @@ resource "aws_security_group" "rancher" {
 }
 
 data "template_file" "cloud_config" {
-  template = "${file("${path.module}/cloud-config.yaml")}"
+  template = file("${path.module}/cloud-config.yaml")
 }
 
 resource "aws_instance" "rancher" {
-  count         = "${var.node_count}"
-  ami           = "${data.aws_ami.rancheros.image_id}"
-  instance_type = "${var.instance_type}"
-  key_name      = "${aws_key_pair.ssh_key.id}"
-  user_data     = "${data.template_file.cloud_config.rendered}"
+  count         = var.node_count
+  ami           = data.aws_ami.rancheros.image_id
+  instance_type = var.instance_type
+  key_name      = aws_key_pair.ssh_key.id
+  user_data     = data.template_file.cloud_config.rendered
 
   vpc_security_group_ids      = ["${aws_security_group.rancher.id}"]
-  subnet_id                   = "${data.aws_subnet_ids.available.ids[0]}"
+  subnet_id                   = data.aws_subnet_ids.available.ids[0]
   associate_public_ip_address = true
 
   #  iam_instance_profile = "k8s-ec2-route53"
@@ -152,7 +152,7 @@ resource "aws_instance" "rancher" {
 }
 
 resource "aws_elb" "rancher" {
-  name            = "${var.server_name}"
+  name            = var.server_name
   subnets         = ["${data.aws_subnet_ids.available.ids[0]}"]
   security_groups = ["${aws_security_group.rancher-elb.id}"]
 
@@ -182,19 +182,19 @@ resource "aws_elb" "rancher" {
   idle_timeout = 1800
 
   tags {
-    Name = "${var.server_name}"
+    Name = var.server_name
   }
 }
 
 # DNS
 resource "aws_route53_record" "rancher" {
-  zone_id = "${data.aws_route53_zone.dns_zone.zone_id}"
+  zone_id = data.aws_route53_zone.dns_zone.zone_id
   name    = "${var.server_name}.${var.domain_name}"
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.rancher.dns_name}"
-    zone_id                = "${aws_elb.rancher.zone_id}"
+    name                   = aws_elb.rancher.dns_name
+    zone_id                = aws_elb.rancher.zone_id
     evaluate_target_health = true
   }
 }

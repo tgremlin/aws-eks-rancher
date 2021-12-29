@@ -108,8 +108,8 @@ resource "aws_instance" "rancher" {
   count         = var.nodeCount
   ami           = var.rancherAmi
   instance_type = var.instanceType
-  key_name      = "${aws_key_pair.sshKey.id}"
-  user_data     = "${data.template_file.cloud_config.rendered}"
+  key_name      = aws_key_pair.sshKey.id
+  user_data     = data.template_file.cloud_config.rendered
 
   vpc_security_group_ids      = ["${aws_security_group.rancher.id}"]
   subnet_id                   = [module.vpc.private_subnets]
@@ -122,10 +122,10 @@ resource "aws_instance" "rancher" {
     volume_size = "50"
   }
   tags = {
-    Name = "${var.projectName}-${count.index}"
-    Terraform = "true"
-    Environment = var.environment
-    Project Name = var.projectName    
+    Name         = "${var.projectName}-${count.index}"
+    Terraform    = "true"
+    Environment  = var.environment
+    Project_Name = var.projectName
   }
 }
 
@@ -160,7 +160,7 @@ resource "aws_elb" "rancher" {
   idle_timeout = 1800
 
   tags {
-    Name = "${var.projectName}"
+    Name = var.projectName
   }
 }
 
@@ -169,14 +169,14 @@ resource "aws_elb" "rancher" {
 #######################################################################
 
 data "template_file" "cloud_config" {
-  template = "${file("${path.module}/cloud-config.yaml")}"
+  template = file("${path.module}/cloud-config.yaml")
 }
 
 # Create SSH key pair for admin of server
 resource "aws_key_pair" "sshKey" {
-    key_name = "${var.projectName}-ssh"
-    # This will be passed using an environment variable in the CI/CD pipeline
-    public_key = var.publicKey
+  key_name = "${var.projectName}-ssh"
+  # This will be passed using an environment variable in the CI/CD pipeline
+  public_key = var.publicKey
 }
 
 
@@ -198,9 +198,9 @@ module "vpc" {
   enable_vpn_gateway = false
 
   tags = {
-    Terraform = "true"
-    Environment = var.environment
-    Project Name = var.projectName
+    Terraform    = "true"
+    Environment  = var.environment
+    Project_Name = var.projectName
   }
 }
 
@@ -210,27 +210,27 @@ module "vpc" {
 
 # Hosted Zone for apex domain
 resource "aws_route53_zone" "zoneApex" {
-  name          = var.domainName
-  comment       = "Hosted Zone for ${var.domainName}"
+  name    = var.domainName
+  comment = "Hosted Zone for ${var.domainName}"
 
   tags {
-    Name      = var.domainName
-    Terraform = "true"
-    Environment = var.environment
-    Project Name = var.projectName
+    Name         = var.domainName
+    Terraform    = "true"
+    Environment  = var.environment
+    Project_Name = var.projectName
   }
 }
 
 # Hosted Zone for subdomain
 resource "aws_route53_zone" "subDomain" {
-  name          = var.subDomain
-  comment       = "Hosted Zone for ${var.subDomain}-${var.domainName}"
+  name    = var.subDomain
+  comment = "Hosted Zone for ${var.subDomain}-${var.domainName}"
 
   tags {
-    Name      = "${var.subDomain}.${var.domainName}"
-    Terraform = "true"
-    Environment = var.environment
-    Project Name = var.projectName
+    Name         = "${var.subDomain}.${var.domainName}"
+    Terraform    = "true"
+    Environment  = var.environment
+    Project_Name = var.projectName
   }
 }
 
@@ -241,8 +241,8 @@ resource "aws_route53_record" "rancher" {
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.rancher.dns_name}"
-    zone_id                = "${aws_elb.rancher.zone_id}"
+    name                   = aws_elb.rancher.dns_name
+    zone_id                = aws_elb.rancher.zone_id
     evaluate_target_health = true
   }
 }
